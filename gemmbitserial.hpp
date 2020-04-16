@@ -427,8 +427,10 @@ static GEMMContext allocGEMMContext_base(
   );
   if(ret.lhsBlock > lhsRows || ret.rhsBlock > rhsRows) {
     // use register blocking only
-    ret.lhsBlock = alignTo(lhsRows, regblock_lhs);
-    ret.rhsBlock = alignTo(rhsRows, regblock_rhs);
+    if(ret.lhsBlock > lhsRows)
+      ret.lhsBlock = alignTo(lhsRows, regblock_lhs);
+    if(ret.rhsBlock > rhsRows)
+      ret.rhsBlock = alignTo(rhsRows, regblock_rhs);
   } else {
     // see if there is too much wasted compute for current block sizes
     if((alignTo(lhsRows, ret.lhsBlock) - lhsRows) > 0.1*lhsRows) {
@@ -464,7 +466,7 @@ static void deallocGEMMContext(GEMMContext ctx) {
 
 // select the implementations to be used based on defines
 #ifdef GEMMBITSERIAL_USE_ARM_NEON
-#warning "Compiling with ARM NEON"
+//#warning "Compiling with ARM NEON"
 #include <arm_neon.h>
 #include "arch-neon.hpp"
 // ARM NEON-specific implementations
@@ -472,7 +474,7 @@ static void deallocGEMMContext(GEMMContext ctx) {
 #define allocGEMMContext  allocGEMMContext_neon
 #define sumRows           sumRows_neon
 #else
-#warning "Compiling using generic popcount"
+//#warning "Compiling using generic popcount"
 #define gemmBitSerial     gemmBitSerial_generic
 #define allocGEMMContext  allocGEMMContext_generic
 #define sumRows           sumRows_generic
